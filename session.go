@@ -293,6 +293,25 @@ func (m *Manager) setCookie(sessionID string, w http.ResponseWriter, r *http.Req
 	}
 }
 
+// Check will only resume a session, not create it if it doesnt exists
+func (m *Manager) Check(ctx context.Context, w http.ResponseWriter, r *http.Request) (Store, error) {
+	ctx = m.getContext(ctx, w, r)
+
+	sid, err := m.sessionID(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if sid != "" {
+		if exists, err := m.opts.store.Check(ctx, sid); err != nil {
+			return nil, err
+		} else if exists {
+			return m.opts.store.Update(ctx, sid, m.opts.expired)
+		}
+	}
+	return nil, nil
+}
+
 // Start a session and return to session storage
 func (m *Manager) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) (Store, error) {
 	ctx = m.getContext(ctx, w, r)

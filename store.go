@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/gopkg/collection/skipmap"
+	"github.com/google/uuid"
 )
 
 var (
@@ -40,6 +41,14 @@ type Store interface {
 	Set(key string, value interface{})
 	// Get session value
 	Get(key string) (interface{}, bool)
+	// GetString get session value as a string
+	GetString(key string) (string, bool)
+	// GetInt get session value as a integer
+	GetInt(key string) (int, bool)
+	// GetBool get session value as a boolean
+	GetBool(key string) (bool, bool)
+	// GetUUID get session value as a UUID
+	GetUUID(key string) (uuid.UUID, bool)
 	// Delete session value, call save function to take effect
 	Delete(key string) interface{}
 	// Save session data
@@ -195,6 +204,48 @@ func (s *store) Get(key string) (interface{}, bool) {
 	val, ok := s.values[key]
 	s.RUnlock()
 	return val, ok
+}
+
+func (s *store) GetString(key string) (string, bool) {
+	if v, ok := s.Get(key); ok {
+		str, ok := v.(string)
+		return str, ok
+	}
+	return "", false
+}
+
+func (s *store) GetBool(key string) (bool, bool) {
+	if v, ok := s.Get(key); ok {
+		b, ok := v.(bool)
+		return b, ok
+	}
+	return false, false
+}
+
+func (s *store) GetInt(key string) (int, bool) {
+	if v, ok := s.Get(key); ok {
+		i, ok := v.(int)
+		return i, ok
+	}
+	return 0, false
+}
+
+func (s *store) GetUUID(key string) (uuid.UUID, bool) {
+	if v, ok := s.Get(key); ok {
+		switch t := v.(type) {
+		case uuid.UUID:
+			return t, true
+		case string:
+			if id, err := uuid.Parse(t); err != nil {
+				return id, true
+			}
+		case []byte:
+			if id, err := uuid.FromBytes(t); err != nil {
+				return id, true
+			}
+		}
+	}
+	return uuid.Nil, false
 }
 
 func (s *store) Delete(key string) interface{} {
