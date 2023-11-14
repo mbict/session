@@ -236,11 +236,11 @@ func (s *store) GetUUID(key string) (uuid.UUID, bool) {
 		case uuid.UUID:
 			return t, true
 		case string:
-			if id, err := uuid.Parse(t); err != nil {
+			if id, err := uuid.Parse(t); err == nil {
 				return id, true
 			}
 		case []byte:
-			if id, err := uuid.FromBytes(t); err != nil {
+			if id, err := uuid.FromBytes(t); err == nil {
 				return id, true
 			}
 		}
