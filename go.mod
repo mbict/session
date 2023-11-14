@@ -1,9 +1,9 @@
-module github.com/mbict/session/v3
+module github.com/mbict/session
 
-go 1.17
+go 1.21
 
 require (
-	github.com/bytedance/gopkg v0.0.0-20221122125632-68358b8ecec6
+	github.com/bytedance/gopkg v0.0.0-20230728082804-614d0af6619b
 	github.com/google/uuid v1.4.0
 	github.com/smartystreets/goconvey v1.6.4
 )
