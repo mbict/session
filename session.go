@@ -293,7 +293,7 @@ func (m *Manager) setCookie(sessionID string, w http.ResponseWriter, r *http.Req
 	}
 }
 
-// Check will only resume a session, not create it if it doesnt exists
+// Check will only resume a session, not create it if it doesn't exists
 func (m *Manager) Check(ctx context.Context, w http.ResponseWriter, r *http.Request) (Store, error) {
 	ctx = m.getContext(ctx, w, r)
 
@@ -364,6 +364,26 @@ func (m *Manager) Refresh(ctx context.Context, w http.ResponseWriter, r *http.Re
 func (m *Manager) Destroy(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx = m.getContext(ctx, w, r)
 
+	defer func() {
+		if m.opts.enableSetCookie {
+			cookie := &http.Cookie{
+				Name:     m.opts.cookieName,
+				Path:     "/",
+				HttpOnly: true,
+				Expires:  time.Now(),
+				MaxAge:   -1,
+			}
+
+			http.SetCookie(w, cookie)
+		}
+
+		if m.opts.enableSIDInHTTPHeader {
+			key := m.opts.sessionNameInHTTPHeader
+			r.Header.Del(key)
+			w.Header().Del(key)
+		}
+	}()
+
 	sid, err := m.sessionID(r)
 	if err != nil {
 		return err
@@ -380,24 +400,6 @@ func (m *Manager) Destroy(ctx context.Context, w http.ResponseWriter, r *http.Re
 	err = m.opts.store.Delete(ctx, sid)
 	if err != nil {
 		return err
-	}
-
-	if m.opts.enableSetCookie {
-		cookie := &http.Cookie{
-			Name:     m.opts.cookieName,
-			Path:     "/",
-			HttpOnly: true,
-			Expires:  time.Now(),
-			MaxAge:   -1,
-		}
-
-		http.SetCookie(w, cookie)
-	}
-
-	if m.opts.enableSIDInHTTPHeader {
-		key := m.opts.sessionNameInHTTPHeader
-		r.Header.Del(key)
-		w.Header().Del(key)
 	}
 
 	return nil
